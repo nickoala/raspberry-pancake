@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Pancake Camera</title>
+
+        <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+        <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css" />
+        <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+        <link href="/static/style.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <img id="video"></img>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xs-12 text-center">
+                    <p id="fps">Loading ...</p>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/client.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            client.connect();
+        </script>
+    </body>
+</html>
