@@ -5,8 +5,15 @@ import shutil
 from datetime import datetime
 from functools import reduce
 
-""" Usage:
+"""
+Intended to be used on a remote backup location where files are organized into
+a YYYY/MM/DD directory tree, this script restricts the number of days present
+under each directory, and remove older days.
+
 $ python3 limit_days.py dirA 30 dirB 60
+
+This command keeps the most recent 30 days in dirA and the most recent 60 days
+in dirB. More directories are allowed.
 """
 
 args = sys.argv[1:]

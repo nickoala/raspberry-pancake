@@ -469,12 +469,14 @@ def main():
     parser.add_argument('--port',
                         type=int,
                         default=8000,
-                        metavar='8000')
+                        metavar='8000',
+                        help='webserver port hosting the camera live view')
     parser.add_argument('--resolution',
                         nargs=2,
                         type=int,
                         default=[320, 240],
-                        metavar=('320', '240'))
+                        metavar=('320', '240'),
+                        help='resolution of camera live view')
     parser.add_argument('--fps',
                         type=int,
                         default=12,

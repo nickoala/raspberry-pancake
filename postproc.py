@@ -17,6 +17,29 @@ from functools import partial
 def make_thread(fn, *args, **kwargs):
     return threading.Thread(target=fn, args=args, kwargs=kwargs)
 
+def log_subprocess_run(logger, command_name, signature):
+    def run(cmd):
+        try:
+            logger.info('{} start: {}'.format(command_name, signature))
+
+            p = subprocess.run(cmd,
+                               text=True,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT)
+
+            p.check_returncode()
+
+        except subprocess.CalledProcessError as e:
+            logger.warning('{} error {}: {}\n{}'.format(
+                    command_name, e.returncode, signature, p.stdout))
+            return False
+
+        else:
+            logger.info('{} done: {}'.format(command_name, signature))
+            return True
+
+    return run
+
 def group_by_day(mp4_paths):
     def day_component(mp4_path):
         try:
@@ -39,11 +62,11 @@ def group_by_day(mp4_paths):
             in itertools.groupby(sorted(mp4_paths), day_component)
                 if k is not None]
 
-def rsync(mp4_paths,
-          remote_host,
-          port,
-          remote_dir,
-          logger):
+def scp(mp4_paths,
+        remote_host,
+        port,
+        remote_dir,
+        logger):
     for day, paths in group_by_day(mp4_paths):
         # Remote directories are organized by yyyy/mm/dd
         dest = os.path.join(remote_dir,
@@ -53,28 +76,20 @@ def rsync(mp4_paths,
 
         action = '{} -> {}:{}'.format(paths, remote_host, dest)
 
-        cmd = ['rsync',
-               '-avh',
-               '-e', 'ssh -p {}'.format(port),
-               '--rsync-path', 'mkdir -p {} && rsync'.format(dest)] \
-             + paths \
-             + ['{}:{}'.format(remote_host, dest)]
+        mkdir_cmd = ['ssh',
+                     '-t',
+                     '-p', str(port),
+                     remote_host,
+                     'mkdir -p {}'.format(dest)]
 
-        try:
-            logger.info('rsync start: {}'.format(action))
+        scp_cmd = ['scp',
+                   '-pq', # preserve mod time and quiet
+                   '-P', str(port)] \
+                 + paths \
+                 + ['{}:{}'.format(remote_host, dest)]
 
-            p = subprocess.run(cmd,
-                               text=True,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
-
-            p.check_returncode()
-
-        except subprocess.CalledProcessError as e:
-            logger.warning('rsync error {}: {}\n{}'.format(
-                                e.returncode, action, p.stdout))
-        else:
-            logger.info('rsync done: {}'.format(action))
+        if log_subprocess_run(logger, 'mkdir', action)(mkdir_cmd):
+            log_subprocess_run(logger, 'scp', action)(scp_cmd)
 
 def ftp(mp4_paths,
         remote_host,
@@ -100,41 +115,27 @@ def ftp(mp4_paths,
                '-p', ftp_password,
                remote_host, dest] + paths
 
-        try:
-            logger.info('ftp start: {}'.format(action))
-
-            p = subprocess.run(cmd,
-                               text=True,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT)
-
-            p.check_returncode()
-
-        except subprocess.CalledProcessError as e:
-            logger.warning('ftp error {}: {}\n{}'.format(
-                                e.returncode, action, p.stdout))
-        else:
-            logger.info('ftp done: {}'.format(action))
+        log_subprocess_run(logger, 'ftp', action)(cmd)
 
 def upload(mp4_count,
            minutes,
            upload_queue,
-           rsync_dests,
+           scp_dests,
            ftp_dests,
            logger):
 
     def do_upload_blocking(paths):
         logger.info('files to upload: {}'.format(paths))
 
-        rsync_threads = \
-            [make_thread(rsync, paths, *dest, logger)
-                for dest in rsync_dests]
+        scp_threads = \
+            [make_thread(scp, paths, *dest, logger)
+                for dest in scp_dests]
 
         ftp_threads = \
             [make_thread(ftp, paths, *dest, logger)
                 for dest in ftp_dests]
 
-        threads = rsync_threads + ftp_threads
+        threads = scp_threads + ftp_threads
 
         for t in threads:
             t.start()
@@ -297,22 +298,7 @@ def MP4Box(h264_path, mp4_path, fps, logger):
            '-cat', h264_path,
            '-new', mp4_path]
 
-    try:
-        p = subprocess.run(cmd,
-                        text=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT)
-
-        p.check_returncode()
-
-    except subprocess.CalledProcessError as e:
-        logger.warning('MP4Box error {}: {}\n{}'.format(
-                                e.returncode, action, p.stdout))
-        return False
-
-    else:
-        logger.info('MP4Box done: {}'.format(action))
-        return True
+    return log_subprocess_run(logger, 'MP4Box', action)(cmd)
 
 def process_detection_with_h264(detection,
                                 h264,
@@ -370,7 +356,7 @@ def main():
             raise_error_if_not_directory(self, dir)
             setattr(namespace, self.dest, [dir, fps])
 
-    class AppendRsyncArgs(argparse.Action):
+    class AppendScpArgs(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             host, port, dir = values
 
@@ -435,9 +421,9 @@ def main():
                         action=StoreMinutesArgs,
                         metavar='{0..59}',
                         help='trigger upload at minutes')
-    parser.add_argument('--upload-rsync',
+    parser.add_argument('--upload-scp',
                         nargs=3,
-                        action=AppendRsyncArgs,
+                        action=AppendScpArgs,
                         default=[],
                         metavar=('user@host', 'port', 'remote_dir'),
                         help='better set up SSH key-based authentication')
@@ -468,7 +454,7 @@ def main():
 
 
     def has_upload_destinations(args):
-        return (args.upload_rsync or args.upload_ftp)
+        return (args.upload_scp or args.upload_ftp)
 
     def has_upload_triggers(args):
         return (args.upload_after_convert or args.upload_minutes)
@@ -478,7 +464,7 @@ def main():
         exit(3)
 
     if has_upload_triggers(args) and not has_upload_destinations(args):
-        print('Please set upload destination: --upload-rsync or --upload-ftp')
+        print('Please set upload destination: --upload-scp or --upload-ftp')
         exit(3)
 
 
@@ -518,7 +504,7 @@ def main():
                                     args.upload_after_convert,
                                     args.upload_minutes,
                                     upload_queue,
-                                    args.upload_rsync,
+                                    args.upload_scp,
                                     args.upload_ftp,
                                     upload_logger)
         upload_thread.start()

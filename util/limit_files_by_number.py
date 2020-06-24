@@ -2,8 +2,13 @@ import sys
 import os
 import glob
 
-""" Usage:
-$ python3 limit_files_by_number.py dirA 8 dirB 8
+"""
+Remove old files in directories.
+
+$ python3 limit_files_by_number.py dirA 8 dirB 4
+
+This command keeps the most recent 8 files in dirA and the most recent 4
+files in dirB, and remove all others. More directories are allowed.
 """
 
 args = sys.argv[1:]

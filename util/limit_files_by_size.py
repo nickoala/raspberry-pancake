@@ -4,8 +4,13 @@ import glob
 from functools import reduce
 from itertools import dropwhile
 
-""" Usage:
+"""
+Restrict total file sizes in directories. Remove older files.
+
 $ python3 limit_files_by_size.py dirA 1200000 dirB 2000000
+
+This command keeps total file sizes in dirA under 1200000 bytes, and dirB under
+2000000 bytes. More directories are allowed.
 """
 
 args = sys.argv[1:]
