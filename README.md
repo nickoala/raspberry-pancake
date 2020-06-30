@@ -3,11 +3,12 @@ Raspberry Pancake
 
 There are no shortage of open source CCTV solutions claimed to work on Raspberry
 Pi. Examples include [MotionEyeOS](https://github.com/ccrisan/motioneyeos),
-[RPi-Cam-Web-Interface](https://elinux.org/RPi-Cam-Web-Interface), among others.
-Many offer motion detection (which I don't need); some expose a lot of options
-(which are confusing). None works reliably on a Raspberry Pi according to my
-test (tweaking settings is a surefire way to break something). I am happy to
-find a **simple and reliable** alternative in [Camp](https://github.com/patrickfuller/camp).
+[RPi-Cam-Web-Interface](https://elinux.org/RPi-Cam-Web-Interface), [among
+others](https://kerberos.io). Many offer motion detection (which I don't need);
+some expose a lot of options (which are confusing). None works reliably on a
+Raspberry Pi according to my test (tweaking settings is a surefire way to break
+something). I am happy to find a **simple and reliable** alternative in
+[Camp](https://github.com/patrickfuller/camp).
 
 This project derives from [Patrick Fuller's Camp](https://github.com/patrickfuller/camp),
 a simple web server hosting a Raspberry Pi camera. Its bare-bone architecture
@@ -29,8 +30,8 @@ Contrary to Camp, this project does not support USB camera. I want to keep it
 simple.
 
 The name _Pancake_ was meant to be a mix of _Pan_, _Cam_, and _Record_. I
-originally planned to incorporate pan-tilt functionality, but decided not to do
-it in the end. The name had been born, so be it.
+originally planned to incorporate pan-tilt, but decided not to do it in the end.
+The name had been born, so be it.
 
 
 Installation
@@ -124,8 +125,8 @@ optional arguments:
 
 `--max-stream-fps 10`
 
-- The maximum number of frames sent to browser every second. It helps preserve
-  bandwidth.
+- When the web page is being viewed, the maximum number of frames sent to
+  browser every second. It helps preserve bandwidth.
 - The _actual_ number of frames sent to browser every second is restricted by
   another factor. The webserver does not send a new frame until it receives the
   browser's acknowledgement of the last sent frame. In other words, the
@@ -169,12 +170,17 @@ optional arguments:
 `--detect {no-image,image}`
 
 - This option determines what your detect function looks like.
+- The detect function must return `True` or `False`. It must be defined in
+  `customize.py`, supplied by you.
 - If `no-image`, detect function is `detect()`. This means your detection is not
-  visual (does not depend on a captured image).
+  visual (does not depend on a captured image). Some ideas are:
+  - time-dependent recording
+  - environment-dependent recording, as long as you have the appropriate sensors.
 - If `image`, detect function is `detect(bytes)`, `bytes` being the RGB values
   of a captured frame. This likely means you want to detect something visual.
-- The detect function must return a boolean value, `True` or `False`. It must be
-  defined in `customize.py`, supplied by you.
+  Some ideas are:
+  - compare two frames to detect motion
+  - perform image classification to detect a scene of interest
 - The thread calling detect function is independent from the thread recording
   detections. A slow detect function does not interfere with recording.
   Don't worry.
@@ -222,6 +228,9 @@ optional arguments:
 
 postproc.py
 -----------
+
+_Option parameters are shown either as defaults or placeholders. I hope context
+makes it clear._
 
 ```
 $ python3 postproc.py --help
@@ -356,7 +365,7 @@ They are in directory `util/`.
 `limit_days.py`
 
 - Intended to be used on a remote backup location where files are organized into
-  a YYYY/MM/DD directory tree, this script restricts the number of days present
+  a `YYYY/MM/DD` directory tree, this script restricts the number of days present
   under each directory, and remove older days.
 
 
@@ -375,11 +384,11 @@ All examples assume this directory structure. The directories `h264`, `mp4`, and
 ├── postproc.py
 ├── index.html
 ├── login.html
-├── static
-├── h264
-├── mp4
-├── log
-└── util
+├── static/
+├── h264/
+├── mp4/
+├── log/
+└── util/
 ```
 
 A lot of times, `pancake.py` and `postproc.py` are used in tandem. **Remember to
