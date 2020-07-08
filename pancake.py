@@ -399,12 +399,14 @@ def configure_camera(resolution,
                      framerate,
                      vflip,
                      hflip,
+                     rotation,
                      annotate_text_size):
     c = picamera.PiCamera(
             resolution=resolution,
             framerate=framerate)
     c.vflip = vflip
     c.hflip = hflip
+    c.rotation = rotation
     c.annotate_text_size = annotate_text_size
     time.sleep(2)  # warm-up
     return c
@@ -486,6 +488,10 @@ def main():
                         action='store_true')
     parser.add_argument('--hflip',
                         action='store_true')
+    parser.add_argument('--rotation',
+                        type=int,
+                        default=0,
+                        choices=[0, 90, 180, 270])
     parser.add_argument('--annotate-text-size',
                         type=int,
                         default=24,
@@ -603,6 +609,7 @@ def main():
                               args.fps,
                               args.vflip,
                               args.hflip,
+                              args.rotation,
                               args.annotate_text_size)
 
     double_buffer = DoubleBuffer()

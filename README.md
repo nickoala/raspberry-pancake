@@ -79,8 +79,9 @@ makes it clear._
 ```
 $ python3 pancake.py --help
 usage: pancake.py [-h] [--port 8000] [--resolution 320 240] [--fps 12]
-                  [--vflip] [--hflip] [--annotate-text-size 24]
-                  [--max-stream-fps 10] [--record-continuous h264_dir]
+                  [--vflip] [--hflip] [--rotation {0,90,180,270}]
+                  [--annotate-text-size 24] [--max-stream-fps 10]
+                  [--record-continuous h264_dir]
                   [--record-detection {edge,all} h264_dir]
                   [--record-resize w h] [--detect {no-image,image}]
                   [--detect-resize w h] [--detect-interval seconds]
@@ -93,6 +94,7 @@ optional arguments:
   --fps 12              camera framerate
   --vflip
   --hflip
+  --rotation {0,90,180,270}
   --annotate-text-size 24
   --max-stream-fps 10   max streaming framerate
   --record-continuous h264_dir
@@ -116,6 +118,7 @@ optional arguments:
 `--fps 12`  
 `--vflip`  
 `--hflip`  
+`--rotation {0,90,180,270}`  
 `--annotate-text-size 24`  
 
 - Self-explanatory, I hope.
