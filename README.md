@@ -8,7 +8,8 @@ others](https://kerberos.io). Many offer motion detection (which I don't need);
 some expose a lot of options (which are confusing). None works reliably on a
 Raspberry Pi according to my test (tweaking settings is a surefire way to break
 something). I am happy to find a **simple and reliable** alternative in
-[Camp](https://github.com/patrickfuller/camp).
+[Camp](https://github.com/patrickfuller/camp). (An honorable mention goes to
+[Hawkeye](https://igorpartola.com/projects/hawkeye/).)
 
 This project derives from [Patrick Fuller's Camp](https://github.com/patrickfuller/camp),
 a simple web server hosting a Raspberry Pi camera. Its bare-bone architecture
@@ -411,16 +412,16 @@ python3 pancake.py \
 ```
 python3 pancake.py \
     --record-continuous h264 \
-    --emit ppp
+    --emit kitchen
 
-python3 postproc.py ppp \
+python3 postproc.py kitchen \
     --convert mp4 12 \
     --upload-after-convert 1 \
     --upload-scp pi@192.168.1.23 22 bak/cam1 \
     --log log/postproc.log
 ```
 - Record continuously into directory `h264`
-- Emit messages to unix domain socket for post-processor to handle
+- Emit messages to unix domain socket `kitchen` for post-processor to handle
 - Convert h264 into directory `mp4` at 12 FPS
 - Trigger upload after each mp4 conversion
 - SCP to `pi@192.168.1.23:bak/cam1`
@@ -435,9 +436,9 @@ python3 pancake.py \
     --fps 30 \
     --record-continuous h264 \
     --login password.txt \
-    --emit ppp
+    --emit kitchen
 
-python3 postproc.py ppp \
+python3 postproc.py kitchen \
     --convert mp4 30 \
     --upload-after-convert 1 \
     --upload-scp pi@192.168.1.22 22 bak/cam2 \
@@ -450,7 +451,7 @@ python3 postproc.py ppp \
   longer, upload takes longer._
 - Record continuously into directory `h264`
 - Password-protect the web page
-- Emit messages to unix domain socket for post-processor to handle
+- Emit messages to unix domain socket `kitchen` for post-processor to handle
 - Convert h264 into directory `mp4` at 30 FPS
 - Trigger upload after each mp4 conversion
 - Upload to two destinations, one via SCP, one via FTP.
@@ -461,9 +462,9 @@ python3 postproc.py ppp \
 python3 pancake.py \
     --record-detection edge h264 \
     --detect no-image \
-    --emit ppp
+    --emit kitchen
 
-python3 postproc.py ppp \
+python3 postproc.py kitchen \
     --convert mp4 12 \
     --upload-minutes 0 20 40 \
     --upload-scp pi@192.168.1.22 22 bakery/cam3 \
@@ -472,7 +473,7 @@ python3 postproc.py ppp \
 ```
 - Record detection edges into directory `h264`
 - A `detect()` function is expected to be defined in `customize.py`
-- Emit messages to unix domain socket for post-processor to handle
+- Emit messages to unix domain socket `kitchen` for post-processor to handle
 - Convert h264 into directory `mp4` at 12 FPS
 - Trigger upload based on time, at 00-, 20-, 40-minute marks.
 - Upload to two destinations, both via SCP.
@@ -485,9 +486,9 @@ python3 pancake.py \
     --record-detection all h264 \
     --detect image \
     --detect-resize 224 224 \
-    --emit ppp
+    --emit kitchen
 
-python3 postproc.py ppp \
+python3 postproc.py kitchen \
     --convert mp4 12 \
     --upload-after-convert 3 \
     --upload-minutes {5..59..15} \
@@ -498,7 +499,7 @@ python3 postproc.py ppp \
 - Record detections for as long as detection remains true, into directory `h264`
 - A `detect(bytes)` function is expected to be defined in `customize.py`
 - Resize images to 224x224 before passing to detect function
-- Emit messages to unix domain socket for post-processor to handle
+- Emit messages to unix domain socket `kitchen` for post-processor to handle
 - Convert h264 into directory `mp4` at 12 FPS
 - Trigger upload after 3 mp4 conversions, or at 05-, 20-, 35-, 50-minute marks.
   Note that the shell expansion `{5..59..15}` may not be used in systemd service
@@ -527,7 +528,7 @@ ExecStart=python3 pancake.py \
               --fps 12 \
               --record-continuous h264 \
               --login password.txt \
-              --emit ppp
+              --emit kitchen
 
 [Install]
 WantedBy=multi-user.target
@@ -541,7 +542,7 @@ After=network.target
 [Service]
 WorkingDirectory=/home/pi/raspberry-pancake
 User=pi
-ExecStart=python3 postproc.py ppp \
+ExecStart=python3 postproc.py kitchen \
               --convert mp4 12 \
               --upload-after-convert 1 \
               --upload-scp pi@somewhere.on.planet 1234 bakery/oven \
