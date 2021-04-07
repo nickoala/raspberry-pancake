@@ -47,11 +47,11 @@ I would begin by changing user password, hostname, timezone, and enabling camera
 ```
 sudo apt-get update
 sudo apt-get dist-upgrade
-sudo apt-get install python3-pip gpac ncftp
+sudo apt-get install python3-pip git gpac ncftp
 sudo pip3 install picamera tornado
 ```
 
-`gpac` and `ncftp` are optional. I see no harm in including them.
+`git` is for downloading this project.
 
 `gpac` is for the command `MP4Box`, which converts h264 to mp4. `ncftp` is for
 the command `ncftpput`, which sends a file via FTP. Both may (or may not) be
